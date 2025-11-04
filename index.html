@@ -64,8 +64,81 @@
   
     <!-- Chatbot Embed Centered with Styling -->
     
-    <div id="deployment-2981bafd-f1ab-499c-b7cd-d81c4ecbd7ca"></div>
-    <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
+<div id="deployment-323c25e9-29c7-46be-92c9-919ade6de365"></div>
+<script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
+
+<!-- Hide copy and feedback buttons for Pickaxe embed -->
+<style id="pa-hide-copy-buttons">
+  /* Hide copy and feedback buttons (Pickaxe embed + Studio) */
+  button[aria-label*="copy" i],
+  button[title*="copy" i],
+  .pxe-flex.pxe-h-4.pxe-items-center.pxe-gap-3
+    > button.pxe-flex.pxe-items-center.pxe-gap-1.pxe-opacity-70,
+  .flex.h-4.items-center.gap-3
+    > button.flex.items-center.gap-1.opacity-70,
+  [aria-label*="thumb" i],
+  [aria-label*="like" i],
+  [aria-label*="dislike" i],
+  [aria-label*="upvote" i],
+  [aria-label*="downvote" i] {
+    display: none !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+</style>
+
+<script>
+  (() => {
+    if (window.__PA_HIDE_COPY__) return;
+    window.__PA_HIDE_COPY__ = true;
+
+    const DEBUG = false; // set to true for console logs
+
+    if (DEBUG) console.log("[pickaxe] hide copy and feedback buttons active");
+
+    function removeButtons() {
+      let removed = 0;
+
+      // remove unlabeled icon buttons in action bars
+      document
+        .querySelectorAll(
+          ".pxe-flex.pxe-h-4.pxe-items-center.pxe-gap-3 button, .flex.h-4.items-center.gap-3 button"
+        )
+        .forEach((btn) => {
+          if (
+            btn.querySelector("svg") &&
+            !btn.getAttribute("aria-label") &&
+            !btn.textContent.trim()
+          ) {
+            btn.remove();
+            removed++;
+          }
+        });
+
+      // remove feedback buttons
+      document
+        .querySelectorAll(
+          "[aria-label*='thumb' i], [aria-label*='like' i], [aria-label*='dislike' i], [aria-label*='upvote' i], [aria-label*='downvote' i]"
+        )
+        .forEach((btn) => {
+          btn.remove();
+          removed++;
+        });
+
+      if (DEBUG && removed > 0) {
+        console.log(`[pickaxe] removed ${removed} button(s)`);
+      }
+    }
+
+    // run immediately and watch for DOM changes
+    removeButtons();
+    new MutationObserver(removeButtons).observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+  })();
+</script>
+
 
     <script>
       document.addEventListener("DOMContentLoaded", () => {
