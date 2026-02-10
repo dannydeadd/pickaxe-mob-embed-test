@@ -72,8 +72,6 @@
     const ROOT_ID = "deployment-f0ede5af-b199-4697-a100-b838983d1a04";
     const DEBUG = true;
 
-    const log = (...args) => DEBUG && console.log("[pa-enter-send]", ...args);
-
     const root = document.getElementById(ROOT_ID);
     if (!root) return;
 
@@ -81,39 +79,27 @@
       /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-    if (!isIOS()) {
-      log("not iOS, exiting");
-      return;
-    }
+    if (!isIOS()) return;
+
+    const log = (...args) => DEBUG && console.log("[pa-ios-send]", ...args);
 
     const getTextarea = () => root.querySelector("textarea");
-    const getForm = (ta) => ta && ta.closest && ta.closest("form");
 
-    const submitForm = (form) => {
-      if (!form) return false;
+    const findSendButton = (ta) => {
+      const form = ta.closest("form") || root;
+      const buttons = Array.from(form.querySelectorAll("button")).filter((b) => !b.disabled);
 
-      try {
-        if (typeof form.requestSubmit === "function") {
-          form.requestSubmit();
-          return true;
-        }
-      } catch (e) {}
+      const labeled = buttons.find((b) => {
+        const a = (b.getAttribute("aria-label") || "").toLowerCase();
+        const t = (b.getAttribute("title") || "").toLowerCase();
+        return a.includes("send") || t.includes("send");
+      });
+      if (labeled) return labeled;
 
-      try {
-        const submit = form.querySelector('button[type="submit"], input[type="submit"]');
-        if (submit) {
-          submit.click();
-          return true;
-        }
-      } catch (e) {}
+      const typeSubmit = buttons.find((b) => (b.getAttribute("type") || "").toLowerCase() === "submit");
+      if (typeSubmit) return typeSubmit;
 
-      try {
-        const evt = new Event("submit", { bubbles: true, cancelable: true });
-        form.dispatchEvent(evt);
-        return true;
-      } catch (e) {}
-
-      return false;
+      return buttons.length ? buttons[buttons.length - 1] : null;
     };
 
     const wire = (ta) => {
@@ -124,22 +110,18 @@
         ta.setAttribute("enterkeyhint", "send");
       } catch (e) {}
 
-      log("wired textarea", ta);
+      const trySend = (reason) => {
+        const text = (ta.value || "").trim();
+        if (!text) return;
 
-      const handleSendAttempt = (reason) => {
-        const value = (ta.value || "").trim();
-        if (!value) return;
-
-        const form = getForm(ta);
-        if (!form) {
-          log("no form found for textarea");
+        const btn = findSendButton(ta);
+        if (!btn) {
+          log("no send button found");
           return;
         }
 
-        log("attempt send", reason);
-
-        const ok = submitForm(form);
-        if (!ok) log("submit failed");
+        log("click send", reason, btn);
+        btn.click();
       };
 
       ta.addEventListener(
@@ -151,7 +133,7 @@
           e.preventDefault();
           e.stopPropagation();
 
-          handleSendAttempt("keydown-enter");
+          trySend("keydown");
         },
         true
       );
@@ -165,7 +147,7 @@
           e.preventDefault();
           e.stopPropagation();
 
-          handleSendAttempt("beforeinput-return");
+          trySend("beforeinput");
         },
         true
       );
@@ -176,8 +158,8 @@
           const v = ta.value || "";
           if (!v.includes("\n")) return;
 
-          ta.value = v.replace(/\n+/g, "");
-          handleSendAttempt("input-newline");
+          ta.value = v.replace(/\n+/g, "").trim();
+          trySend("input-newline");
         },
         true
       );
@@ -189,13 +171,10 @@
     };
 
     attach();
-
-    new MutationObserver(() => attach()).observe(root, {
-      childList: true,
-      subtree: true,
-    });
+    new MutationObserver(attach).observe(root, { childList: true, subtree: true });
   })();
 </script>
+
 
 
 <!-- Hide copy and feedback buttons for Pickaxe embed -->
