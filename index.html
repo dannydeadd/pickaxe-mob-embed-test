@@ -67,6 +67,137 @@
 <div id="deployment-f0ede5af-b199-4697-a100-b838983d1a04"></div>
 <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
 
+<script>
+  (() => {
+    const ROOT_ID = "deployment-f0ede5af-b199-4697-a100-b838983d1a04";
+    const DEBUG = true;
+
+    const log = (...args) => DEBUG && console.log("[pa-enter-send]", ...args);
+
+    const root = document.getElementById(ROOT_ID);
+    if (!root) return;
+
+    const isIOS = () =>
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (!isIOS()) {
+      log("not iOS, exiting");
+      return;
+    }
+
+    const getTextarea = () => root.querySelector("textarea");
+    const getForm = (ta) => ta && ta.closest && ta.closest("form");
+
+    const submitForm = (form) => {
+      if (!form) return false;
+
+      try {
+        if (typeof form.requestSubmit === "function") {
+          form.requestSubmit();
+          return true;
+        }
+      } catch (e) {}
+
+      try {
+        const submit = form.querySelector('button[type="submit"], input[type="submit"]');
+        if (submit) {
+          submit.click();
+          return true;
+        }
+      } catch (e) {}
+
+      try {
+        const evt = new Event("submit", { bubbles: true, cancelable: true });
+        form.dispatchEvent(evt);
+        return true;
+      } catch (e) {}
+
+      return false;
+    };
+
+    const wire = (ta) => {
+      if (!ta || ta.dataset.paEnterSendWired === "1") return;
+      ta.dataset.paEnterSendWired = "1";
+
+      try {
+        ta.setAttribute("enterkeyhint", "send");
+      } catch (e) {}
+
+      log("wired textarea", ta);
+
+      const handleSendAttempt = (reason) => {
+        const value = (ta.value || "").trim();
+        if (!value) return;
+
+        const form = getForm(ta);
+        if (!form) {
+          log("no form found for textarea");
+          return;
+        }
+
+        log("attempt send", reason);
+
+        const ok = submitForm(form);
+        if (!ok) log("submit failed");
+      };
+
+      ta.addEventListener(
+        "keydown",
+        (e) => {
+          if (e.key !== "Enter") return;
+          if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
+
+          e.preventDefault();
+          e.stopPropagation();
+
+          handleSendAttempt("keydown-enter");
+        },
+        true
+      );
+
+      ta.addEventListener(
+        "beforeinput",
+        (e) => {
+          const type = e.inputType || "";
+          if (type !== "insertLineBreak" && type !== "insertParagraph") return;
+
+          e.preventDefault();
+          e.stopPropagation();
+
+          handleSendAttempt("beforeinput-return");
+        },
+        true
+      );
+
+      ta.addEventListener(
+        "input",
+        () => {
+          const v = ta.value || "";
+          if (!v.includes("\n")) return;
+
+          ta.value = v.replace(/\n+/g, "");
+          handleSendAttempt("input-newline");
+        },
+        true
+      );
+    };
+
+    const attach = () => {
+      const ta = getTextarea();
+      if (ta) wire(ta);
+    };
+
+    attach();
+
+    new MutationObserver(() => attach()).observe(root, {
+      childList: true,
+      subtree: true,
+    });
+  })();
+</script>
+
+
 <!-- Hide copy and feedback buttons for Pickaxe embed -->
 <style id="pa-hide-copy-buttons">
   /* Hide copy and feedback buttons (Pickaxe embed + Studio) */
