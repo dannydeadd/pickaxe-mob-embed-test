@@ -67,6 +67,50 @@
 <div id="deployment-f0ede5af-b199-4697-a100-b838983d1a04"></div>
 <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
 
+<script>
+  (() => {
+    const ROOT_ID = "deployment-f0ede5af-b199-4697-a100-b838983d1a04";
+    const root = document.getElementById(ROOT_ID);
+    if (!root) return;
+
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    if (!isIOS()) return;
+
+    const wire = (ta) => {
+      if (ta.dataset.paEnterSend === "1") return;
+      ta.dataset.paEnterSend = "1";
+      try { ta.setAttribute("enterkeyhint", "send"); } catch (e) {}
+
+      const clickSend = () => {
+        const text = (ta.value || "").trim();
+        if (!text) return;
+
+        const form = ta.closest("form") || root;
+        const btns = Array.from(form.querySelectorAll("button")).filter((b) => !b.disabled);
+        const send = btns.find((b) => /send/i.test(b.getAttribute("aria-label") || b.getAttribute("title") || "")) || btns[btns.length - 1];
+        if (send) send.click();
+      };
+
+      ta.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
+        e.preventDefault();
+        e.stopPropagation();
+        clickSend();
+      }, true);
+    };
+
+    const attach = () => {
+      const ta = root.querySelector("textarea");
+      if (ta) wire(ta);
+    };
+
+    attach();
+    new MutationObserver(attach).observe(root, { childList: true, subtree: true });
+  })();
+</script>
 
 
 <!-- Hide copy and feedback buttons for Pickaxe embed -->
