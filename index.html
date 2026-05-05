@@ -2,175 +2,131 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Charismatic Connector Clone</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pickaxe Mobile Enter-to-Send Test</title>
 </head>
-  <body>
-    <h1>Testing:</h1>
-    <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
+<body>
+  <h1>Testing:</h1>
+
+  <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
   <div id="deployment-65f8541a-4cc3-4b47-99b6-af088399d419"></div>
 
-    <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
-<div id="deployment-65f8541a-4cc3-4b47-99b6-af088399d419"></div>
+  <script>
+    (() => {
+      const ROOT_ID = "deployment-65f8541a-4cc3-4b47-99b6-af088399d419";
+      const DEBUG = false;
 
-<script>
-(function () {
-  const ROOT_ID = "deployment-65f8541a-4cc3-4b47-99b6-af088399d419";
-  const DEBUG = true;
+      const log = (...args) => {
+        if (DEBUG) console.log("[pickaxe-enter-send]", ...args);
+      };
 
-  function log(...args) {
-    if (DEBUG) console.log("[Pickaxe Enter to Send]", ...args);
-  }
+      const getRoot = () => document.getElementById(ROOT_ID);
 
-  function getRoot() {
-    return document.getElementById(ROOT_ID);
-  }
+      const findTextarea = () => getRoot()?.querySelector("textarea") ?? null;
 
-  function findTextareas(root) {
-    if (!root) return [];
+      const findSendButton = (textarea) => {
+        const root = getRoot();
+        const scope = textarea.closest("form") || root;
+        if (!scope) return null;
 
-    const results = [];
+        const buttons = Array.from(scope.querySelectorAll("button")).filter(
+          (button) => !button.disabled,
+        );
 
-    root.querySelectorAll("textarea").forEach((el) => results.push(el));
+        const labeledButton = buttons.find((button) => {
+          const aria = (button.getAttribute("aria-label") || "").toLowerCase();
+          const title = (button.getAttribute("title") || "").toLowerCase();
+          const text = (button.textContent || "").toLowerCase();
 
-    root.querySelectorAll("*").forEach((el) => {
-      if (el.shadowRoot) {
-        el.shadowRoot.querySelectorAll("textarea").forEach((ta) => results.push(ta));
-      }
-    });
+          return (
+            aria.includes("send") ||
+            title.includes("send") ||
+            text.includes("send")
+          );
+        });
 
-    return results;
-  }
+        if (labeledButton) return labeledButton;
 
-  function findSendButton(textarea) {
-    const root = getRoot();
-    const container = textarea.closest("form") || textarea.closest("[class]") || root || document;
+        const submitButton = buttons.find(
+          (button) => (button.getAttribute("type") || "").toLowerCase() === "submit",
+        );
 
-    let buttons = Array.from(container.querySelectorAll("button"));
+        return submitButton || buttons[buttons.length - 1] || null;
+      };
 
-    if (!buttons.length && root) {
-      buttons = Array.from(root.querySelectorAll("button"));
-    }
+      const sendMessage = (textarea, reason) => {
+        const value = (textarea.value || "").trim();
+        if (!value) return;
 
-    buttons = buttons.filter((button) => !button.disabled);
-
-    const sendButton = buttons.find((button) => {
-      const aria = (button.getAttribute("aria-label") || "").toLowerCase();
-      const title = (button.getAttribute("title") || "").toLowerCase();
-      const text = (button.textContent || "").toLowerCase();
-
-      return (
-        aria.includes("send") ||
-        title.includes("send") ||
-        text.includes("send")
-      );
-    });
-
-    if (sendButton) return sendButton;
-
-    const submitButton = buttons.find((button) => {
-      return (button.getAttribute("type") || "").toLowerCase() === "submit";
-    });
-
-    if (submitButton) return submitButton;
-
-    return buttons[buttons.length - 1] || null;
-  }
-
-  function sendMessage(textarea) {
-    const value = (textarea.value || "").trim();
-    if (!value) return;
-
-    const button = findSendButton(textarea);
-
-    if (button) {
-      log("Clicking send button", button);
-      button.click();
-      return;
-    }
-
-    const form = textarea.closest("form");
-    if (form && typeof form.requestSubmit === "function") {
-      log("Submitting form");
-      form.requestSubmit();
-    }
-  }
-
-  function wireTextarea(textarea) {
-    if (!textarea || textarea.dataset.enterToSendAttached === "true") return;
-
-    textarea.dataset.enterToSendAttached = "true";
-    textarea.setAttribute("enterkeyhint", "send");
-
-    textarea.addEventListener(
-      "keydown",
-      function (event) {
-        if (event.key !== "Enter") return;
-        if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
-
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-
-        sendMessage(textarea);
-      },
-      true
-    );
-
-    textarea.addEventListener(
-      "beforeinput",
-      function (event) {
-        if (
-          event.inputType !== "insertLineBreak" &&
-          event.inputType !== "insertParagraph"
-        ) {
+        const button = findSendButton(textarea);
+        if (!button) {
+          log("No send button found", reason);
           return;
         }
 
-        event.preventDefault();
-        event.stopPropagation();
-        event.stopImmediatePropagation();
+        log("Sending message", reason);
+        button.click();
+      };
 
-        sendMessage(textarea);
-      },
-      true
-    );
+      const wireTextarea = (textarea) => {
+        if (!textarea || textarea.dataset.pickaxeEnterSendWired === "1") return;
+        textarea.dataset.pickaxeEnterSendWired = "1";
 
-    textarea.addEventListener(
-      "input",
-      function () {
-        if (!textarea.value.includes("\n")) return;
+        textarea.setAttribute("enterkeyhint", "send");
 
-        textarea.value = textarea.value.replace(/\n+/g, "").trim();
-        sendMessage(textarea);
-      },
-      true
-    );
+        textarea.addEventListener(
+          "keydown",
+          (event) => {
+            if (event.key !== "Enter") return;
+            if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
 
-    log("Attached enter-to-send behavior", textarea);
-  }
+            event.preventDefault();
+            event.stopPropagation();
 
-  function attach() {
-    const root = getRoot();
-    if (!root) return;
+            sendMessage(textarea, "keydown");
+          },
+          true,
+        );
 
-    findTextareas(root).forEach(wireTextarea);
-  }
+        textarea.addEventListener(
+          "beforeinput",
+          (event) => {
+            const type = event.inputType || "";
+            if (type !== "insertLineBreak" && type !== "insertParagraph") return;
 
-  attach();
+            event.preventDefault();
+            event.stopPropagation();
 
-  const observer = new MutationObserver(attach);
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
+            sendMessage(textarea, "beforeinput");
+          },
+          true,
+        );
 
-  window.addEventListener("load", attach);
-  setTimeout(attach, 1000);
-  setTimeout(attach, 3000);
-})();
-</script>
-  </body>
+        textarea.addEventListener(
+          "input",
+          () => {
+            if (!textarea.value.includes("\n")) return;
+
+            textarea.value = textarea.value.replace(/\n+/g, "").trim();
+            sendMessage(textarea, "input");
+          },
+          true,
+        );
+
+        log("Attached enter-to-send");
+      };
+
+      const attach = () => {
+        const textarea = findTextarea();
+        if (textarea) wireTextarea(textarea);
+      };
+
+      attach();
+      new MutationObserver(attach).observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    })();
+  </script>
+</body>
 </html>
