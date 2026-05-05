@@ -5,298 +5,172 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Charismatic Connector Clone</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-      background-color: #131533;
-      color: white;
-      text-align: center;
-    }
-    h1, h2 {
-      color: #fbb6ce;
-    }
-    .section {
-      padding: 40px 20px;
-    }
-    .video, .image {
-      max-width: 90%;
-      margin: 20px auto;
-      display: block;
-    }
-    .btn {
-      display: inline-block;
-      background-color: #f72485;
-      color: white;
-      padding: 12px 20px;
-      margin-top: 15px;
-      text-decoration: none;
-      border: none;
-      border-radius: 4px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .divider {
-      border-top: 1px solid #1E4E87;
-      width: 30%;
-      margin: 30px auto;
-    }
-   
-
-  </style>
-</head>
-<body>
-
-  <div class="section">
-    <h1>Congrats! Your archetype is:<br>Charismatic Connector</h1>
-    <p>Please watch the video below first, then download your special report!</p>
-    <img class="video" src="https://placehold.co/600x400" alt="Video Placeholder">
-    <a class="btn" href="https://studio.pickaxe.co/STUDIOGRJHDM4MXKI89B5?action=email-login&email=example@gmail.com">Access Your Report</a>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="section">
-    <h2>STEP #2<br>Get advice for your archetype</h2>
-    <p>Click the button below for additional tips from my AI assistant, Linda!</p>
-    <img class="image" src="https://placehold.co/600x400" alt="Archetype Chart">
   
-    <!-- Chatbot Embed Centered with Styling -->
-    
-<iframe 
-  id="pickaxe-embed-deployment-d8a35075-8c35-46fe-ad71-c810b20c87fc"
-  src="https://studio.pickaxe.co/_embed/J3P1QRJ6M5?d=deployment-d8a35075-8c35-46fe-ad71-c810b20c87fc" 
-  style="width: 100%; height: 500px; max-width: 700px; border-radius: 4px;" 
-  frameborder="0" allow="microphone">
-</iframe>
+</head>
+  <body>
+    <h1>Testing:</h1>
+    <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
+  <div id="deployment-65f8541a-4cc3-4b47-99b6-af088399d419"></div>
+
+    <script src="https://studio.pickaxe.co/api/embed/bundle.js" defer></script>
+<div id="deployment-65f8541a-4cc3-4b47-99b6-af088399d419"></div>
 
 <script>
-  (() => {
-    const ROOT_ID = "deployment-f0ede5af-b199-4697-a100-b838983d1a04";
-    const DEBUG = true;
+(function () {
+  const ROOT_ID = "deployment-65f8541a-4cc3-4b47-99b6-af088399d419";
+  const DEBUG = true;
 
-    const root = document.getElementById(ROOT_ID);
-    if (!root) return;
+  function log(...args) {
+    if (DEBUG) console.log("[Pickaxe Enter to Send]", ...args);
+  }
 
-    const isIOS = () =>
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  function getRoot() {
+    return document.getElementById(ROOT_ID);
+  }
 
-    if (!isIOS()) return;
+  function findTextareas(root) {
+    if (!root) return [];
 
-    const log = (...args) => DEBUG && console.log("[pa-ios-send]", ...args);
+    const results = [];
 
-    const getTextarea = () => root.querySelector("textarea");
+    root.querySelectorAll("textarea").forEach((el) => results.push(el));
 
-    const findSendButton = (ta) => {
-      const form = ta.closest("form") || root;
-      const buttons = Array.from(form.querySelectorAll("button")).filter((b) => !b.disabled);
+    root.querySelectorAll("*").forEach((el) => {
+      if (el.shadowRoot) {
+        el.shadowRoot.querySelectorAll("textarea").forEach((ta) => results.push(ta));
+      }
+    });
 
-      const labeled = buttons.find((b) => {
-        const a = (b.getAttribute("aria-label") || "").toLowerCase();
-        const t = (b.getAttribute("title") || "").toLowerCase();
-        return a.includes("send") || t.includes("send");
-      });
-      if (labeled) return labeled;
+    return results;
+  }
 
-      const typeSubmit = buttons.find((b) => (b.getAttribute("type") || "").toLowerCase() === "submit");
-      if (typeSubmit) return typeSubmit;
+  function findSendButton(textarea) {
+    const root = getRoot();
+    const container = textarea.closest("form") || textarea.closest("[class]") || root || document;
 
-      return buttons.length ? buttons[buttons.length - 1] : null;
-    };
+    let buttons = Array.from(container.querySelectorAll("button"));
 
-    const wire = (ta) => {
-      if (!ta || ta.dataset.paEnterSendWired === "1") return;
-      ta.dataset.paEnterSendWired = "1";
+    if (!buttons.length && root) {
+      buttons = Array.from(root.querySelectorAll("button"));
+    }
 
-      try {
-        ta.setAttribute("enterkeyhint", "send");
-      } catch (e) {}
+    buttons = buttons.filter((button) => !button.disabled);
 
-      const trySend = (reason) => {
-        const text = (ta.value || "").trim();
-        if (!text) return;
+    const sendButton = buttons.find((button) => {
+      const aria = (button.getAttribute("aria-label") || "").toLowerCase();
+      const title = (button.getAttribute("title") || "").toLowerCase();
+      const text = (button.textContent || "").toLowerCase();
 
-        const btn = findSendButton(ta);
-        if (!btn) {
-          log("no send button found");
+      return (
+        aria.includes("send") ||
+        title.includes("send") ||
+        text.includes("send")
+      );
+    });
+
+    if (sendButton) return sendButton;
+
+    const submitButton = buttons.find((button) => {
+      return (button.getAttribute("type") || "").toLowerCase() === "submit";
+    });
+
+    if (submitButton) return submitButton;
+
+    return buttons[buttons.length - 1] || null;
+  }
+
+  function sendMessage(textarea) {
+    const value = (textarea.value || "").trim();
+    if (!value) return;
+
+    const button = findSendButton(textarea);
+
+    if (button) {
+      log("Clicking send button", button);
+      button.click();
+      return;
+    }
+
+    const form = textarea.closest("form");
+    if (form && typeof form.requestSubmit === "function") {
+      log("Submitting form");
+      form.requestSubmit();
+    }
+  }
+
+  function wireTextarea(textarea) {
+    if (!textarea || textarea.dataset.enterToSendAttached === "true") return;
+
+    textarea.dataset.enterToSendAttached = "true";
+    textarea.setAttribute("enterkeyhint", "send");
+
+    textarea.addEventListener(
+      "keydown",
+      function (event) {
+        if (event.key !== "Enter") return;
+        if (event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+
+        sendMessage(textarea);
+      },
+      true
+    );
+
+    textarea.addEventListener(
+      "beforeinput",
+      function (event) {
+        if (
+          event.inputType !== "insertLineBreak" &&
+          event.inputType !== "insertParagraph"
+        ) {
           return;
         }
 
-        log("click send", reason, btn);
-        btn.click();
-      };
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
 
-      ta.addEventListener(
-        "keydown",
-        (e) => {
-          if (e.key !== "Enter") return;
-          if (e.shiftKey || e.altKey || e.ctrlKey || e.metaKey) return;
+        sendMessage(textarea);
+      },
+      true
+    );
 
-          e.preventDefault();
-          e.stopPropagation();
+    textarea.addEventListener(
+      "input",
+      function () {
+        if (!textarea.value.includes("\n")) return;
 
-          trySend("keydown");
-        },
-        true
-      );
+        textarea.value = textarea.value.replace(/\n+/g, "").trim();
+        sendMessage(textarea);
+      },
+      true
+    );
 
-      ta.addEventListener(
-        "beforeinput",
-        (e) => {
-          const type = e.inputType || "";
-          if (type !== "insertLineBreak" && type !== "insertParagraph") return;
-
-          e.preventDefault();
-          e.stopPropagation();
-
-          trySend("beforeinput");
-        },
-        true
-      );
-
-      ta.addEventListener(
-        "input",
-        () => {
-          const v = ta.value || "";
-          if (!v.includes("\n")) return;
-
-          ta.value = v.replace(/\n+/g, "").trim();
-          trySend("input-newline");
-        },
-        true
-      );
-    };
-
-    const attach = () => {
-      const ta = getTextarea();
-      if (ta) wire(ta);
-    };
-
-    attach();
-    new MutationObserver(attach).observe(root, { childList: true, subtree: true });
-  })();
-</script>
-
-
-
-<!-- Hide copy and feedback buttons for Pickaxe embed -->
-<style id="pa-hide-copy-buttons">
-  /* Hide copy and feedback buttons (Pickaxe embed + Studio) */
-  button[aria-label*="copy" i],
-  button[title*="copy" i],
-  .pxe-flex.pxe-h-4.pxe-items-center.pxe-gap-3
-    > button.pxe-flex.pxe-items-center.pxe-gap-1.pxe-opacity-70,
-  .flex.h-4.items-center.gap-3
-    > button.flex.items-center.gap-1.opacity-70,
-  [aria-label*="thumb" i],
-  [aria-label*="like" i],
-  [aria-label*="dislike" i],
-  [aria-label*="upvote" i],
-  [aria-label*="downvote" i] {
-    display: none !important;
-    visibility: hidden !important;
-    pointer-events: none !important;
+    log("Attached enter-to-send behavior", textarea);
   }
-</style>
 
-<script>
-  (() => {
-    if (window.__PA_HIDE_COPY__) return;
-    window.__PA_HIDE_COPY__ = true;
+  function attach() {
+    const root = getRoot();
+    if (!root) return;
 
-    const DEBUG = false; // set to true for console logs
+    findTextareas(root).forEach(wireTextarea);
+  }
 
-    if (DEBUG) console.log("[pickaxe] hide copy and feedback buttons active");
+  attach();
 
-    function removeButtons() {
-      let removed = 0;
+  const observer = new MutationObserver(attach);
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
 
-      // remove unlabeled icon buttons in action bars
-      document
-        .querySelectorAll(
-          ".pxe-flex.pxe-h-4.pxe-items-center.pxe-gap-3 button, .flex.h-4.items-center.gap-3 button"
-        )
-        .forEach((btn) => {
-          if (
-            btn.querySelector("svg") &&
-            !btn.getAttribute("aria-label") &&
-            !btn.textContent.trim()
-          ) {
-            btn.remove();
-            removed++;
-          }
-        });
-
-      // remove feedback buttons
-      document
-        .querySelectorAll(
-          "[aria-label*='thumb' i], [aria-label*='like' i], [aria-label*='dislike' i], [aria-label*='upvote' i], [aria-label*='downvote' i]"
-        )
-        .forEach((btn) => {
-          btn.remove();
-          removed++;
-        });
-
-      if (DEBUG && removed > 0) {
-        console.log(`[pickaxe] removed ${removed} button(s)`);
-      }
-    }
-
-    // run immediately and watch for DOM changes
-    removeButtons();
-    new MutationObserver(removeButtons).observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
-  })();
+  window.addEventListener("load", attach);
+  setTimeout(attach, 1000);
+  setTimeout(attach, 3000);
+})();
 </script>
-
-
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        // Grab email from URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const userEmail = urlParams.get("email") || "unknown@example.com";
-    
-        // Listen for Pickaxe submission events
-        window.addEventListener("pickaxe:response", (event) => {
-          const responseData = event.detail;
-          console.log("Captured Pickaxe response:", responseData);
-    
-          // Combine email + submission data
-          const payload = {
-            email: userEmail,
-            pickaxeData: responseData
-          };
-    
-          console.log("Combined Payload to Send:", payload);
-    
-          // Send to your endpoint (example using fetch)
-          // fetch("https://your-api-endpoint.com/receive", {
-          //   method: "POST",
-          //   headers: { "Content-Type": "application/json" },
-          //   body: JSON.stringify(payload)
-          // })
-          // .then(res => res.json())
-          // .then(data => console.log("Successfully sent:", data))
-          // .catch(err => console.error("Error sending data:", err));
-        });
-      });
-  </script>
-  </div>
-  
-  
-
-  <div class="divider"></div>
-
-  <div class="section">
-    <h2>STEP #3<br>Register for our next webinar!</h2>
-    <p>Sign up for my next LIVE event. Let's talk about your archetype and how it can make you $$$</p>
-    <img class="image" src="https://placehold.co/600x400" alt="Webinar Promo">
-    <a class="btn" href="#">Grab Your Seat</a>
-  </div>
-
-</body>
+  </body>
 </html>
